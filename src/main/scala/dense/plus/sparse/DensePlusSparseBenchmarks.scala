@@ -3,7 +3,7 @@ package dense.plus.sparse
 import java.util.Random
 
 import util.Benchmark
-import breeze.linalg.{VectorBuilder, DenseVector => BreezeDenseVector, Vector => BreezeVector}
+import breeze.linalg.{DenseVector => BreezeDenseVector, Vector => BreezeVector, sum => breezeSum, VectorBuilder}
 import org.apache.mahout.math.{SequentialAccessSparseVector, DenseVector => MahoutDenseVector, Vector => MahoutVector}
 import org.apache.mahout.math.function.Functions
 
@@ -19,7 +19,7 @@ abstract class DensePlusSparseBenchmark extends Benchmark {
 
 class BreezeDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
 
-  val d: BreezeVector[Double] = new BreezeDenseVector[Double](arr)
+  val d: BreezeDenseVector[Double] = new BreezeDenseVector[Double](arr)
   val sb = new VectorBuilder[Double](n, elements.length)
   elements.foreach { e =>
     sb.add(e._1, e._2)
@@ -29,6 +29,8 @@ class BreezeDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
   override def run() {
     d += s
   }
+
+  override def certificate(): Double = d(elements.head._1)
 }
 
 class MahoutDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
@@ -42,6 +44,8 @@ class MahoutDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
   override def run() {
     d.assign(s, Functions.PLUS)
   }
+
+  override def certificate(): Double = d.get(elements.head._1)
 }
 
 class NaiveDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
@@ -65,6 +69,8 @@ class NaiveDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
       i += 1
     }
   }
+
+  override def certificate(): Double = d(elements.head._1)
 }
 
 

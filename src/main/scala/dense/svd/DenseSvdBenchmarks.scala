@@ -3,7 +3,7 @@ package dense.svd
 import java.util.Random
 
 import org.apache.mahout.math.{DenseMatrix, SingularValueDecomposition}
-import breeze.linalg.{DenseMatrix => BreezeDenseMatrix, LinearAlgebra}
+import breeze.linalg.{DenseMatrix => BreezeDenseMatrix, svd => breezeSvd, DenseVector => BreezeDenseVector}
 import org.jblas.{Singular, DoubleMatrix}
 
 import util.Benchmark
@@ -24,9 +24,13 @@ class MahoutDenseSvdBenchmark extends DenseSvdBenchmark {
     }
   }
 
+  var svd: SingularValueDecomposition = _
+
   override def run() {
-    new SingularValueDecomposition(mat)
+    svd = new SingularValueDecomposition(mat)
   }
+
+  override def certificate(): Double = svd.getSingularValues.head
 }
 
 class JblasDenseSvdBenchmark extends DenseSvdBenchmark {
@@ -38,9 +42,13 @@ class JblasDenseSvdBenchmark extends DenseSvdBenchmark {
     }
   }
 
+  var svd: Array[DoubleMatrix] = _
+
   override def run() {
-    Singular.fullSVD(mat)
+    svd = Singular.fullSVD(mat)
   }
+
+  override def certificate(): Double = svd(1).toArray.head
 }
 
 class BreezeDenseSvdBenchmark extends DenseSvdBenchmark {
@@ -52,9 +60,13 @@ class BreezeDenseSvdBenchmark extends DenseSvdBenchmark {
     }
   }
 
+  var svd: (BreezeDenseMatrix[Double], BreezeDenseVector[Double], BreezeDenseMatrix[Double]) = _
+
   override def run() {
-    LinearAlgebra.svd(mat)
+    svd = breezeSvd.apply(mat)
   }
+
+  override def certificate(): Double = svd._2.toArray.head
 }
 
 object DenseSvdBenchmarks extends App {

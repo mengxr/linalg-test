@@ -3,11 +3,10 @@ package sparse.times.dense
 import java.util.Random
 
 import util.Benchmark
-import org.apache.mahout.math.{SparseMatrix => MahoutSparseMatrix, DenseMatrix => MahoutDenseMatrix}
+import org.apache.mahout.math.{SparseMatrix => MahoutSparseMatrix, DenseMatrix => MahoutDenseMatrix, Matrix => MahoutMatrix}
 import breeze.linalg.{CSCMatrix, DenseMatrix => BreezeDenseMatrix}
 
 abstract class SparseMatrixTimesDenseMatrixBenchmark extends Benchmark {
-
   val m = 5000
   val n = 500
   val p = 100
@@ -43,9 +42,14 @@ class BreezeSparseMatrixTimesDenseMatrixBenchmark extends SparseMatrixTimesDense
       denseB.update(i, j, rawB(i+j*n))
     }
   }
+
+  var C: BreezeDenseMatrix[Double] = _
+
   override def run() {
-    sparseA * denseB
+    C = sparseA * denseB
   }
+
+  override def certificate(): Double = C(0, 0)
 }
 
 class MahoutSparseMatrixTimesDenseMatrixBenchmark extends SparseMatrixTimesDenseMatrixBenchmark {
@@ -63,9 +67,13 @@ class MahoutSparseMatrixTimesDenseMatrixBenchmark extends SparseMatrixTimesDense
       denseB.set(i, j, rawB(i+j*n))
     }
   }
+
+  var C: MahoutMatrix = _
   override def run() {
-    sparseA.times(denseB)
+    C = sparseA.times(denseB)
   }
+
+  override def certificate(): Double = C.get(0, 0)
 }
 
 class NaiveSparseMatrixTimesDenseMatrixBenchmark extends SparseMatrixTimesDenseMatrixBenchmark {
@@ -93,8 +101,9 @@ class NaiveSparseMatrixTimesDenseMatrixBenchmark extends SparseMatrixTimesDenseM
   }
   ii.update(m, nnz)
 
+  val C = new Array[Double](m*p)
+
   override def run {
-    val C = new Array[Double](m*p)
     j = 0
     while (j < p) {
       i = 0
@@ -111,6 +120,8 @@ class NaiveSparseMatrixTimesDenseMatrixBenchmark extends SparseMatrixTimesDenseM
       j += 1
     }
   }
+
+  override def certificate(): Double = C(0)
 }
 
 object SparseMatrixTimesDenseMatrixBenchmarks extends App {
