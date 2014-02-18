@@ -68,7 +68,7 @@ class MtjDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
     d.add(s)
   }
 
-  override def certificate(): Double = d.get(0)
+  override def certificate(): Double = d.get(elements.head._1)
 }
 
 class CommonsDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
