@@ -3,7 +3,7 @@ package dense.plus.sparse
 import java.util.Random
 
 import util.Benchmark
-import breeze.linalg.{DenseVector => BreezeDenseVector, Vector => BreezeVector, sum => breezeSum, VectorBuilder}
+import breeze.linalg.{DenseVector => BreezeDenseVector, Vector => BreezeVector, VectorBuilder}
 import org.apache.mahout.math.{SequentialAccessSparseVector, DenseVector => MahoutDenseVector, Vector => MahoutVector}
 import org.apache.mahout.math.function.Functions
 
