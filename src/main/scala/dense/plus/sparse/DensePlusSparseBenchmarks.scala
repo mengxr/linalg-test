@@ -2,13 +2,13 @@ package dense.plus.sparse
 
 import java.util.Random
 
-import util.Benchmark
 import breeze.linalg.{DenseVector => BreezeDenseVector, Vector => BreezeVector, VectorBuilder}
-import org.apache.mahout.math.{SequentialAccessSparseVector, DenseVector => MahoutDenseVector, Vector => MahoutVector}
-import org.apache.mahout.math.function.Functions
-import no.uib.cipr.matrix.sparse.{SparseVector => MtjSparseVector}
 import no.uib.cipr.matrix.{DenseVector => MtjDenseVector, Vector => MtjVector}
-import org.apache.commons.math3.linear.{RealVector => CommonsVector, OpenMapRealVector => CommonsSparseVector, ArrayRealVector => CommonsDenseVector}
+import no.uib.cipr.matrix.sparse.{SparseVector => MtjSparseVector}
+import org.apache.commons.math3.linear.{ArrayRealVector => CommonsDenseVector, OpenMapRealVector => CommonsSparseVector, RealVector => CommonsVector}
+import org.apache.mahout.math.{DenseVector => MahoutDenseVector, SequentialAccessSparseVector, Vector => MahoutVector}
+import org.apache.mahout.math.function.Functions
+import util.Benchmark
 
 abstract class DensePlusSparseBenchmark extends Benchmark {
 

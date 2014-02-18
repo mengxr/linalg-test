@@ -6,6 +6,10 @@ import util.Benchmark
 import org.apache.mahout.math.{SparseRowMatrix => MahoutSparseMatrix, DenseMatrix => MahoutDenseMatrix, Matrix => MahoutMatrix, RandomAccessSparseVector => MahoutSparseVector}
 import breeze.linalg.{CSCMatrix, DenseMatrix => BreezeDenseMatrix}
 import org.apache.commons.math3.linear.{RealMatrix => CommonsMatrix, Array2DRowRealMatrix => CommonsDenseMatrix, OpenMapRealMatrix => CommonsSparseMatrix}
+import no.uib.cipr.matrix.{Matrix => MtjMatrix, DenseMatrix => MtjDenseMatrix}
+import no.uib.cipr.matrix.sparse.{CompRowMatrix => MtjSparseMatrix}
+import scala.collection.mutable
+
 
 abstract class SparseMatrixTimesDenseMatrixBenchmark extends Benchmark {
   val m = 5000
@@ -109,6 +113,50 @@ class CommonsSparseMatrixTimesDenseMatrixBenchmark extends SparseMatrixTimesDens
   def certificate(): Double = C.getEntry(0, 0)
 }
 
+class MtjSparseMatrixTimesDenseMatrixBenchmark extends SparseMatrixTimesDenseMatrixBenchmark {
+
+  val pattern = new mutable.ArrayBuffer[Array[Int]]()
+
+  for (i <- 0 until m) {
+    val columnIndices = new mutable.ArrayBuffer[Int]()
+    var nnz = 0
+    for (j <- 0 until n) {
+      val a = rawA(i + j * m)
+      if (a != 0.0) {
+        columnIndices += j
+        nnz += 1
+      }
+    }
+    pattern += columnIndices.toArray
+  }
+
+  val sparseA = new MtjSparseMatrix(m, n, pattern.toArray)
+
+  for (i <- 0 until m) {
+    for (j <- 0 until n) {
+      val a = rawA(i + j * m)
+      if (a != 0.0) {
+        sparseA.set(i, j, a)
+      }
+    }
+  }
+
+  val denseB = new MtjDenseMatrix(n, p)
+  for (i <- 0 until n) {
+    for (j <- 0 until p) {
+      denseB.set(i, j, rawB(i + j * n))
+    }
+  }
+
+  val C = new MtjDenseMatrix(m, p)
+
+  def run() {
+    sparseA.mult(denseB, C)
+  }
+
+  def certificate(): Double = C.get(0, 0)
+}
+
 class NaiveSparseMatrixTimesDenseMatrixBenchmark extends SparseMatrixTimesDenseMatrixBenchmark {
 
   val ii = new Array[Int](m+1)
@@ -164,10 +212,11 @@ object SparseMatrixTimesDenseMatrixBenchmarks extends App {
 
   val naive = new NaiveSparseMatrixTimesDenseMatrixBenchmark
   val breeze = new BreezeSparseMatrixTimesDenseMatrixBenchmark
+  val mtj = new MtjSparseMatrixTimesDenseMatrixBenchmark
   val mahout = new MahoutSparseMatrixTimesDenseMatrixBenchmark
   val commons = new CommonsSparseMatrixTimesDenseMatrixBenchmark
 
-  for (bench <- Seq(naive, breeze, mahout, commons)) {
+  for (bench <- Seq(naive, breeze, mtj, mahout, commons)) {
     bench.runBenchmark(n, numTrials)
   }
 }

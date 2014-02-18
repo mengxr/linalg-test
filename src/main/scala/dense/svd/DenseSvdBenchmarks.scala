@@ -2,11 +2,11 @@ package dense.svd
 
 import java.util.Random
 
+import breeze.linalg.{DenseMatrix => BreezeDenseMatrix, DenseVector => BreezeDenseVector, svd => breezeSvd}
+import no.uib.cipr.matrix.{DenseMatrix => MtjDenseMatrix, SVD => MtjSvd}
+import org.apache.commons.math3.linear.{Array2DRowRealMatrix => CommonsDenseMatrix, SingularValueDecomposition => CommonsSvd}
 import org.apache.mahout.math.{DenseMatrix, SingularValueDecomposition}
-import breeze.linalg.{DenseMatrix => BreezeDenseMatrix, svd => breezeSvd, DenseVector => BreezeDenseVector}
-import org.jblas.{Singular, DoubleMatrix}
-import org.apache.commons.math3.linear.{SingularValueDecomposition => CommonsSvd, Array2DRowRealMatrix => CommonsDenseMatrix}
-
+import org.jblas.{DoubleMatrix, Singular}
 import util.Benchmark
 
 abstract class DenseSvdBenchmark extends Benchmark {
@@ -88,6 +88,24 @@ class CommonsDenseSvdBenchmark extends DenseSvdBenchmark {
   override def certificate(): Double = svd.getSingularValues.head
 }
 
+class MtjDenseSvdBenchmark extends DenseSvdBenchmark {
+
+  val mat = new MtjDenseMatrix(m, n)
+  for (i <- 0 until m) {
+    for (j <- 0 until n) {
+      mat.set(i, j, raw(i + j * m))
+    }
+  }
+
+  var svd: MtjSvd = _
+
+  override def run() {
+    svd = MtjSvd.factorize(mat)
+  }
+
+  override def certificate(): Double = svd.getS.head
+}
+
 object DenseSvdBenchmarks extends App {
 
   val n = 10
@@ -95,10 +113,11 @@ object DenseSvdBenchmarks extends App {
 
   val jblas = new JblasDenseSvdBenchmark
   val breeze = new BreezeDenseSvdBenchmark
+  val mtj = new MtjDenseSvdBenchmark
   val mahout = new MahoutDenseSvdBenchmark
   val commons = new CommonsDenseSvdBenchmark
 
-  for (bench <- Seq(jblas, breeze, mahout, commons)) {
+  for (bench <- Seq(jblas, breeze, mtj, mahout, commons)) {
     bench.runBenchmark(n, 2)
   }
 }
