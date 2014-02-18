@@ -6,14 +6,15 @@ import util.Benchmark
 import breeze.linalg.{DenseVector => BreezeDenseVector, Vector => BreezeVector, VectorBuilder}
 import org.apache.mahout.math.{SequentialAccessSparseVector, DenseVector => MahoutDenseVector, Vector => MahoutVector}
 import org.apache.mahout.math.function.Functions
-import no.uib.cipr.matrix.sparse.{SparseVector => MtjSparseVector, CompRowMatrix => MtjSparseMatrix}
+import no.uib.cipr.matrix.sparse.{SparseVector => MtjSparseVector}
 import no.uib.cipr.matrix.{DenseVector => MtjDenseVector, Vector => MtjVector}
+import org.apache.commons.math3.linear.{RealVector => CommonsVector, OpenMapRealVector => CommonsSparseVector, ArrayRealVector => CommonsDenseVector}
 
 abstract class DensePlusSparseBenchmark extends Benchmark {
 
   val n = 1000000
   val arr = Array.fill(n)(0.0)
-  val sparsity = 0.05
+  val sparsity = 0.01
   val random = new Random(0)
   val elements = (0 until n).filter( x => random.nextDouble() < sparsity )
     .map((_, random.nextDouble()))
@@ -70,6 +71,24 @@ class MtjDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
   override def certificate(): Double = d.get(0)
 }
 
+class CommonsDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
+
+  val d: CommonsDenseVector = new CommonsDenseVector(arr)
+  val s: CommonsSparseVector = new CommonsSparseVector(n, elements.size)
+  elements.foreach { e =>
+    s.setEntry(e._1, e._2)
+  }
+
+  var result: CommonsVector = _
+
+  override def run() {
+    // no inplace add for commons
+    result = d.add(s)
+  }
+
+  override def certificate(): Double = result.getEntry(elements.head._1)
+}
+
 class NaiveDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
 
   val d = arr.clone()
@@ -95,16 +114,18 @@ class NaiveDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
   override def certificate(): Double = d(elements.head._1)
 }
 
-
 object DensePlusSparseBenchmarks extends App {
 
   val m = 10000
   val numTrials = 1000
 
-  val mahout = new MahoutDensePlusSparseBenchmark()
-  mahout.runBenchmark(m, numTrials)
-  val breeze = new BreezeDensePlusSparseBenchmark()
-  breeze.runBenchmark(m, numTrials)
   val naive = new NaiveDensePlusSparseBenchmark()
-  naive.runBenchmark(m, numTrials)
+  val breeze = new BreezeDensePlusSparseBenchmark()
+  val mtj = new MtjDensePlusSparseBenchmark()
+  val mahout = new MahoutDensePlusSparseBenchmark()
+  val commons = new CommonsDensePlusSparseBenchmark()
+
+  for (bench <- Seq(naive, breeze, mtj, mahout, commons)) {
+    bench.runBenchmark(m, numTrials)
+  }
 }
