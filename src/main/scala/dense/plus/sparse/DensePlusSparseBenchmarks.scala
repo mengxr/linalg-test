@@ -6,6 +6,8 @@ import util.Benchmark
 import breeze.linalg.{DenseVector => BreezeDenseVector, Vector => BreezeVector, VectorBuilder}
 import org.apache.mahout.math.{SequentialAccessSparseVector, DenseVector => MahoutDenseVector, Vector => MahoutVector}
 import org.apache.mahout.math.function.Functions
+import no.uib.cipr.matrix.sparse.{SparseVector => MtjSparseVector, CompRowMatrix => MtjSparseMatrix}
+import no.uib.cipr.matrix.{DenseVector => MtjDenseVector, Vector => MtjVector}
 
 abstract class DensePlusSparseBenchmark extends Benchmark {
 
@@ -46,6 +48,26 @@ class MahoutDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
   }
 
   override def certificate(): Double = d.get(elements.head._1)
+}
+
+class MtjDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
+
+  val d: MtjDenseVector = new MtjDenseVector(arr)
+  val indices = new Array[Int](elements.length)
+  val values = new Array[Double](elements.length)
+  var i = 0
+  elements.foreach { e =>
+    indices.update(i, e._1)
+    values.update(i, e._2)
+    i += 1
+  }
+  val s: MtjVector = new MtjSparseVector(n, indices, values)
+
+  override def run() {
+    d.add(s)
+  }
+
+  override def certificate(): Double = d.get(0)
 }
 
 class NaiveDensePlusSparseBenchmark extends DensePlusSparseBenchmark {

@@ -8,4 +8,4 @@ libraryDependencies += "org.apache.mahout" % "mahout-math" % "0.9"
 
 libraryDependencies += "org.jblas" % "jblas" % "1.2.3"
 
-// libraryDependencies += "org.googlecode.netlib-java" % "netlib-java" % "1.1"
+libraryDependencies += "com.googlecode.matrix-toolkits-java" % "mtj" % "1.0.1"
