@@ -5,6 +5,7 @@ import java.util.Random
 import org.apache.mahout.math.{DenseMatrix, SingularValueDecomposition}
 import breeze.linalg.{DenseMatrix => BreezeDenseMatrix, svd => breezeSvd, DenseVector => BreezeDenseVector}
 import org.jblas.{Singular, DoubleMatrix}
+import org.apache.commons.math3.linear.{SingularValueDecomposition => CommonsSvd, Array2DRowRealMatrix => CommonsDenseMatrix}
 
 import util.Benchmark
 
@@ -69,15 +70,35 @@ class BreezeDenseSvdBenchmark extends DenseSvdBenchmark {
   override def certificate(): Double = svd._2.toArray.head
 }
 
+class CommonsDenseSvdBenchmark extends DenseSvdBenchmark {
+
+  val mat = new CommonsDenseMatrix(m, n)
+  for (i <- 0 until m) {
+    for (j <- 0 until n) {
+      mat.setEntry(i, j, raw(i + j * m))
+    }
+  }
+
+  var svd: CommonsSvd = _
+
+  override def run() {
+    svd = new CommonsSvd(mat)
+  }
+
+  override def certificate(): Double = svd.getSingularValues.head
+}
+
 object DenseSvdBenchmarks extends App {
 
   val n = 10
   val numTrials = 2
 
-  val mahout = new MahoutDenseSvdBenchmark
-  mahout.runBenchmark(n, numTrials)
-  val breeze = new BreezeDenseSvdBenchmark
-  breeze.runBenchmark(n, numTrials)
   val jblas = new JblasDenseSvdBenchmark
-  jblas.runBenchmark(n, numTrials)
+  val breeze = new BreezeDenseSvdBenchmark
+  val mahout = new MahoutDenseSvdBenchmark
+  val commons = new CommonsDenseSvdBenchmark
+
+  for (bench <- Seq(jblas, breeze, mahout, commons)) {
+    bench.runBenchmark(n, 2)
+  }
 }
