@@ -60,6 +60,27 @@ class NaiveDenseNormBenchmark extends DenseNormBenchmark {
   def certificate: Double = nrm
 }
 
+class ClosureDenseNormBenchmark extends DenseNormBenchmark {
+
+  var nrm: Double = _
+
+  def foreach[@specialized(Double) T, @specialized(Unit) R](v: Array[T], fn: (T) => R) {
+    var i = 0
+    while (i < arr.length) {
+      fn(v(i))
+      i += 1
+    }
+  }
+
+  def run() {
+    nrm = 0.0
+    foreach[Double, Unit](arr, x => nrm += x * x)
+    nrm = math.sqrt(nrm)
+  }
+
+  def certificate: Double = nrm
+}
+
 class MtjDenseNormBenchmark extends DenseNormBenchmark {
 
   val v = new MtjDenseVector(arr)
@@ -80,7 +101,8 @@ object DenseNormBenchmarks extends App {
   val mahout = new MahoutDenseNormBenchmark
   val naive = new NaiveDenseNormBenchmark
   val mtj = new MtjDenseNormBenchmark
-  for (bench <- Seq(naive, breeze, mahout, mtj)) {
+  val closure = new ClosureDenseNormBenchmark
+  for (bench <- Seq(naive, closure, breeze, mahout, mtj)) {
     bench.runBenchmark(m, numTrials)
   }
 }
