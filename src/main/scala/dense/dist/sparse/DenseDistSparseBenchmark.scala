@@ -3,7 +3,7 @@ package dense.dist.sparse
 import util.Benchmark
 import java.util.Random
 import scala.collection.mutable.ArrayBuffer
-import breeze.linalg.{DenseVector => BDV, VectorBuilder => BVB, distance => breezeDistance}
+import breeze.linalg.{DenseVector => BDV, VectorBuilder => BVB, squaredDistance => breezeSquaredDistance}
 import org.apache.mahout.math.{DenseVector => MDV, SequentialAccessSparseVector => MSV}
 
 /**
@@ -77,7 +77,7 @@ class BreezeDenseDistSparseBenchmark extends DenseDistSparseBenchmark {
   val sv = svBuilder.toSparseVector
 
   def run() {
-    dist = breezeDistance(dv, sv)
+    dist = math.sqrt(breezeSquaredDistance(dv, sv))
   }
 
   def certificate(): Double = dist

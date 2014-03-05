@@ -8,6 +8,7 @@ import breeze.linalg.{CSCMatrix, DenseMatrix => BreezeDenseMatrix}
 import org.apache.commons.math3.linear.{RealMatrix => CommonsMatrix, Array2DRowRealMatrix => CommonsDenseMatrix, OpenMapRealMatrix => CommonsSparseMatrix}
 import no.uib.cipr.matrix.{Matrix => MtjMatrix, DenseMatrix => MtjDenseMatrix}
 import no.uib.cipr.matrix.sparse.{CompRowMatrix => MtjSparseMatrix}
+import BIDMat.{SDMat => BIDSparseMatrix, DMat => BIDDenseMatrix, Mat => BIDMatrix}
 import scala.collection.mutable
 
 
@@ -159,7 +160,7 @@ class MtjSparseMatrixTimesDenseMatrixBenchmark extends SparseMatrixTimesDenseMat
 
 class NaiveSparseMatrixTimesDenseMatrixBenchmark extends SparseMatrixTimesDenseMatrixBenchmark {
 
-  val ii = new Array[Int](m+1)
+  val ii = new Array[Int](m + 1)
   val ij = new Array[Int](nnz)
   val ia = new Array[Double](nnz)
 
@@ -170,7 +171,7 @@ class NaiveSparseMatrixTimesDenseMatrixBenchmark extends SparseMatrixTimesDenseM
     ii.update(i, idx)
     j = 0
     while (j < n) {
-      val x = rawA(i+j*m)
+      val x = rawA(i + j * m)
       if (x != 0.0d) {
         ij.update(idx, j)
         ia.update(idx, x)
@@ -182,20 +183,29 @@ class NaiveSparseMatrixTimesDenseMatrixBenchmark extends SparseMatrixTimesDenseM
   }
   ii.update(m, nnz)
 
-  val C = new Array[Double](m*p)
+  val C = new Array[Double](m * p)
 
   override def run {
-    j = 0
+    var sum = 0.0
+    var next = 0
+    var idx = 0
+    var i = 0
+    var j = 0
+    var jn = 0
+    var jm = 0
     while (j < p) {
+      jm = j * m
+      jn = j * n
       i = 0
+      idx = ii(0)
       while (i < m) {
-        var sum = 0.0d
-        idx = ii(i)
-        while (idx < ii(i+1)) {
-          sum += ia(idx) * rawB(ij(idx) + j*n)
+        sum = 0.0d
+        next = ii(i + 1)
+        while (idx < next) {
+          sum += ia(idx) * rawB(ij(idx) + jn)
           idx += 1
         }
-        C.update(i + j*m, sum)
+        C.update(i + jm, sum)
         i += 1
       }
       j += 1
@@ -205,18 +215,65 @@ class NaiveSparseMatrixTimesDenseMatrixBenchmark extends SparseMatrixTimesDenseM
   override def certificate(): Double = C(0)
 }
 
+class BIDSparseMatrixTimesDenseMatrixBenchmark extends SparseMatrixTimesDenseMatrixBenchmark {
+
+  BIDMatrix.noMKL = true
+  BIDMatrix.ioneBased = 0
+
+  val ii = new Array[Int](nnz)
+  val ij = new Array[Int](n + 1)
+  val ia = new Array[Double](nnz)
+
+  var idx = 0
+  var i = 0
+  var j = 0
+  while (j < n) {
+    ij.update(j, idx)
+    i = 0
+    while (i < m) {
+      val x = rawA(i + j * m)
+      if (x != 0.0d) {
+        ii.update(idx, i)
+        ia.update(idx, x)
+        idx += 1
+      }
+      i += 1
+    }
+    j += 1
+  }
+  ij.update(n, nnz)
+
+  val sparseA = new BIDSparseMatrix(m, n, nnz, ii, ij, ia)
+
+  val denseB = new BIDDenseMatrix(n, p, new Array[Double](n * p))
+  for (i <- 0 until n) {
+    for (j <- 0 until p) {
+      denseB.update(i, j, rawB(i + j * n))
+    }
+  }
+
+  var C: BIDDenseMatrix = new BIDDenseMatrix(m, p, new Array[Double](m * p))
+
+  def run() {
+    sparseA.SMult(denseB, C)
+  }
+
+  def certificate(): Double = C(0, 0)
+}
+
 object SparseMatrixTimesDenseMatrixBenchmarks extends App {
 
-  val n = 5
-  val numTrials = 1
+  val n = 25
+  val numTrials = 5
 
   val naive = new NaiveSparseMatrixTimesDenseMatrixBenchmark
   val breeze = new BreezeSparseMatrixTimesDenseMatrixBenchmark
+  val bid = new BIDSparseMatrixTimesDenseMatrixBenchmark
   val mtj = new MtjSparseMatrixTimesDenseMatrixBenchmark
   val mahout = new MahoutSparseMatrixTimesDenseMatrixBenchmark
   val commons = new CommonsSparseMatrixTimesDenseMatrixBenchmark
 
-  for (bench <- Seq(naive, breeze, mtj, mahout, commons)) {
+  for (bench <- Seq(naive, breeze, bid, mtj, mahout, commons)) {
     bench.runBenchmark(n, numTrials)
   }
 }
