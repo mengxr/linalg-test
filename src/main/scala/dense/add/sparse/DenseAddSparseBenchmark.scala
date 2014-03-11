@@ -1,12 +1,12 @@
-package dense.dot.sparse
+package dense.add.sparse
 
 import util.Benchmark
 import java.util.Random
 import scala.collection.mutable.ArrayBuffer
-import breeze.linalg.{Vector => BV, DenseVector => BDV, VectorBuilder => BVB}
+import breeze.linalg.{Vector => BV, DenseVector => BDV, VectorBuilder => BVB, sum => breezeSum}
 import org.apache.mahout.math.{DenseVector => MDV, SequentialAccessSparseVector => MSV}
 
-abstract class DenseDotSparseBenchmark extends Benchmark {
+abstract class DenseAddSparseBenchmark extends Benchmark {
   val n = 1000000
   val random = new Random(0)
   val arr = Array.fill(n)(random.nextDouble())
@@ -24,26 +24,21 @@ abstract class DenseDotSparseBenchmark extends Benchmark {
   val values = valuesBuffer.toArray
 }
 
-class NaiveDenseDotSparseBenchmark extends DenseDotSparseBenchmark {
-
-  var dot: Double = _
+class NaiveDenseAddSparseBenchmark extends DenseAddSparseBenchmark {
 
   def run() {
-    dot = 0.0
     var i = 0
     val nnz = indices.length
     while (i < nnz) {
-      dot += arr(indices(i)) * values(i)
+      arr(indices(i)) += values(i)
       i += 1
     }
   }
 
-  def certificate(): Double = dot
+  def certificate(): Double = arr.sum
 }
 
-class BreezeDenseDotSparseBenchmark extends DenseDotSparseBenchmark {
-
-  var dot: Double = _
+class BreezeDenseAddSparseBenchmark extends DenseAddSparseBenchmark {
 
   val dv: BV[Double] = new BDV[Double](arr)
 
@@ -54,15 +49,13 @@ class BreezeDenseDotSparseBenchmark extends DenseDotSparseBenchmark {
   val sv: BV[Double] = svBuilder.toSparseVector
 
   def run() {
-    dot = dv.dot(sv)
+    dv += sv
   }
 
-  def certificate(): Double = dot
+  def certificate(): Double = breezeSum(dv)
 }
 
-class MahoutDenseDotSparseBenchmark extends DenseDotSparseBenchmark {
-
-  var dot: Double = _
+class MahoutDenseAddSparseBenchmark extends DenseAddSparseBenchmark {
 
   val dv = new MDV(arr)
 
@@ -72,18 +65,18 @@ class MahoutDenseDotSparseBenchmark extends DenseDotSparseBenchmark {
   }
 
   def run() {
-    dot = dv.dot(sv)
+    dv.addAll(sv)
   }
 
-  def certificate(): Double = dot
+  def certificate(): Double = dv.zSum()
 }
 
-object DenseDotSparseBenchmarks extends App {
+object DenseAddSparseBenchmarks extends App {
   val m = 10000
   val numTrials = 1000
-  val naive = new NaiveDenseDotSparseBenchmark
-  val breeze = new BreezeDenseDotSparseBenchmark
-  val mahout = new MahoutDenseDotSparseBenchmark
+  val naive = new NaiveDenseAddSparseBenchmark
+  val breeze = new BreezeDenseAddSparseBenchmark
+  val mahout = new MahoutDenseAddSparseBenchmark
   for (bench <- Seq(naive, breeze, mahout)) {
     bench.runBenchmark(m, numTrials)
   }
