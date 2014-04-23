@@ -22,7 +22,7 @@ abstract class DensePlusSparseBenchmark extends Benchmark {
 
 class BreezeDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
 
-  val d: BreezeDenseVector[Double] = new BreezeDenseVector[Double](arr)
+  val d: BreezeDenseVector[Double] = new BreezeDenseVector[Double](arr.clone())
   val sb = new VectorBuilder[Double](n, elements.length)
   elements.foreach { e =>
     sb.add(e._1, e._2)
@@ -38,7 +38,7 @@ class BreezeDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
 
 class MahoutDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
 
-  val d: MahoutVector = new MahoutDenseVector(arr)
+  val d: MahoutVector = new MahoutDenseVector(arr.clone())
   val s: MahoutVector = new SequentialAccessSparseVector(n, elements.size)
   elements.foreach { e =>
     s.set(e._1, e._2)
@@ -53,7 +53,7 @@ class MahoutDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
 
 class MtjDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
 
-  val d: MtjDenseVector = new MtjDenseVector(arr)
+  val d: MtjDenseVector = new MtjDenseVector(arr.clone())
   val indices = new Array[Int](elements.length)
   val values = new Array[Double](elements.length)
   var i = 0
@@ -73,7 +73,7 @@ class MtjDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
 
 class CommonsDensePlusSparseBenchmark extends DensePlusSparseBenchmark {
 
-  val d: CommonsDenseVector = new CommonsDenseVector(arr)
+  val d: CommonsDenseVector = new CommonsDenseVector(arr.clone())
   val s: CommonsSparseVector = new CommonsSparseVector(n, elements.size)
   elements.foreach { e =>
     s.setEntry(e._1, e._2)

@@ -8,6 +8,7 @@ import org.apache.commons.math3.linear.{Array2DRowRealMatrix => CommonsDenseMatr
 import org.apache.mahout.math.{DenseMatrix, SingularValueDecomposition}
 import org.jblas.{DoubleMatrix, Singular}
 import util.Benchmark
+import org.apache.log4j.{Level, Logger}
 
 abstract class DenseSvdBenchmark extends Benchmark {
   val m = 500
@@ -107,6 +108,9 @@ class MtjDenseSvdBenchmark extends DenseSvdBenchmark {
 }
 
 object DenseSvdBenchmarks extends App {
+
+  Logger.getLogger("com.github.fommil.netlib").setLevel(Level.ALL)
+  Logger.getLogger("com.github.fommil.jniloader").setLevel(Level.ALL)
 
   val n = 10
   val numTrials = 2
