@@ -62,13 +62,13 @@ class BreezeDenseSvdBenchmark extends DenseSvdBenchmark {
     }
   }
 
-  var svd: (BreezeDenseMatrix[Double], BreezeDenseVector[Double], BreezeDenseMatrix[Double]) = _
+  var svd: breezeSvd.SVD[BreezeDenseMatrix[Double], BreezeDenseVector[Double]] = _
 
   override def run() {
     svd = breezeSvd.apply(mat)
   }
 
-  override def certificate(): Double = svd._2.toArray.head
+  override def certificate(): Double = svd.singularValues.toArray.head
 }
 
 class CommonsDenseSvdBenchmark extends DenseSvdBenchmark {

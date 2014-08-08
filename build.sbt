@@ -2,7 +2,7 @@ name := "linalg-test"
 
 version := "0.1"
 
-libraryDependencies += "org.scalanlp" % "breeze_2.10" % "0.7"
+libraryDependencies += "org.scalanlp" %% "breeze" % "0.9"
 
 libraryDependencies += "org.apache.mahout" % "mahout-math" % "0.9"
 
